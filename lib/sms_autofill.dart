@@ -203,6 +203,9 @@ class PhoneFormFieldHint extends StatelessWidget {
   final InputDecoration? decoration;
   final TextField? child;
   final TextStyle? style;
+  final ValueChanged<String>? onChanged;
+  final void Function(bool selected, String? number)?
+      onHintResult; // fires after hint UI closes
 
   const PhoneFormFieldHint({
     Key? key,
@@ -215,22 +218,27 @@ class PhoneFormFieldHint extends StatelessWidget {
     this.enabled = true,
     this.focusNode,
     this.style,
+    this.onChanged,
+    this.onHintResult,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return _PhoneFieldHint(
-        key: key,
-        child: child,
-        inputFormatters: inputFormatters,
-        controller: controller,
-        validator: validator,
-        decoration: decoration,
-        autoFocus: autoFocus,
-        enabled: enabled,
-        focusNode: focusNode,
-        isFormWidget: true,
-        style: style);
+      key: key,
+      child: child,
+      inputFormatters: inputFormatters,
+      controller: controller,
+      validator: validator,
+      decoration: decoration,
+      autoFocus: autoFocus,
+      enabled: enabled,
+      focusNode: focusNode,
+      isFormWidget: true,
+      style: style,
+      onChanged: onChanged,
+      onHintResult: onHintResult,
+    );
   }
 }
 
@@ -242,6 +250,9 @@ class PhoneFieldHint extends StatelessWidget {
   final InputDecoration? decoration;
   final TextField? child;
   final TextStyle? style;
+  final ValueChanged<String>? onChanged;
+  final void Function(bool selected, String? number)?
+      onHintResult; // fires after hint UI closes
 
   const PhoneFieldHint({
     Key? key,
@@ -252,20 +263,25 @@ class PhoneFieldHint extends StatelessWidget {
     this.autoFocus = false,
     this.focusNode,
     this.style,
+    this.onChanged,
+    this.onHintResult,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return _PhoneFieldHint(
-        key: key,
-        child: child,
-        inputFormatters: inputFormatters,
-        controller: controller,
-        decoration: decoration,
-        autoFocus: autoFocus,
-        focusNode: focusNode,
-        style: style,
-        isFormWidget: false);
+      key: key,
+      child: child,
+      inputFormatters: inputFormatters,
+      controller: controller,
+      decoration: decoration,
+      autoFocus: autoFocus,
+      focusNode: focusNode,
+      style: style,
+      isFormWidget: false,
+      onChanged: onChanged, // NEW
+      onHintResult: onHintResult,
+    );
   }
 }
 
@@ -279,6 +295,8 @@ class _PhoneFieldHint extends StatefulWidget {
   final InputDecoration? decoration;
   final TextField? child;
   final TextStyle? style;
+  final ValueChanged<String>? onChanged;
+  final void Function(bool selected, String? number)? onHintResult;
 
   const _PhoneFieldHint({
     Key? key,
@@ -292,6 +310,8 @@ class _PhoneFieldHint extends StatefulWidget {
     this.enabled = true,
     this.focusNode,
     this.style,
+    this.onChanged,
+    this.onHintResult,
   }) : super(key: key);
 
   @override
@@ -379,6 +399,7 @@ class _PhoneFieldHintState extends State<_PhoneFieldHint> {
       controller: _controller,
       keyboardType: TextInputType.phone,
       style: widget.style,
+      onChanged: widget.onChanged,
     );
   }
 
@@ -395,12 +416,24 @@ class _PhoneFieldHintState extends State<_PhoneFieldHint> {
       controller: _controller,
       keyboardType: TextInputType.phone,
       style: widget.style,
+      onChanged: widget.onChanged,
     );
   }
 
   Future<void> _askPhoneHint() async {
     String? hint = await _autoFill.hint;
-    _controller.value = TextEditingValue(text: hint ?? '');
+    final bool selected = hint != null && hint.isNotEmpty;
+    if (selected) {
+      _controller.value = TextEditingValue(text: hint);
+      // Manually notify because programmatic set() won’t trigger TextField.onChanged.
+      widget.onChanged?.call(hint);
+    }
+
+    // Tell the caller whether a number was selected (true) or the picker was dismissed (false).
+    widget.onHintResult?.call(selected, hint);
+
+    // If dismissed, keep keyboard up for manual entry
+    if (!selected && mounted) _focusNode.requestFocus();
   }
 
   TextEditingController _createInternalController() {
