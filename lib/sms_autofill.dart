@@ -202,6 +202,7 @@ class PhoneFormFieldHint extends StatelessWidget {
   final FormFieldValidator? validator;
   final InputDecoration? decoration;
   final TextField? child;
+  final TextStyle? style;
 
   const PhoneFormFieldHint({
     Key? key,
@@ -213,6 +214,7 @@ class PhoneFormFieldHint extends StatelessWidget {
     this.autoFocus = false,
     this.enabled = true,
     this.focusNode,
+    this.style,
   }) : super(key: key);
 
   @override
@@ -227,7 +229,8 @@ class PhoneFormFieldHint extends StatelessWidget {
         autoFocus: autoFocus,
         enabled: enabled,
         focusNode: focusNode,
-        isFormWidget: true);
+        isFormWidget: true,
+        style: style);
   }
 }
 
